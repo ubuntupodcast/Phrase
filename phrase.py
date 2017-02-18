@@ -78,7 +78,7 @@ def validate_options(options, args):
                 sys.stderr.write("Could not open the specified {0} word file.\n".format(word_type))
                 sys.exit(1)
         else:
-            common_word_file_locations = ["{0}.txt", "~/.pass-phrase/{0}.txt"]
+            common_word_file_locations = ["{0}.txt", "~/.phrase/{0}.txt"]
 
             for loc in common_word_file_locations:
                 wordfile = loc.format(word_type)
@@ -163,11 +163,8 @@ def generate_phrase(adjectives, nouns, separator):
 def phrase(adjectives, nouns, separator, num=1,
                uppercase=False, lowercase=False, capitalise=False):
     """
-    Returns a random pass-phrase made up of
-    adjective noun verb adjective noun
-    
-    I find this basic structure easier to 
-    remember than XKCD style purely random words
+    Returns a random phrase made up of
+    adjective adjective noun
     """
     
     phrases = []
