@@ -13,7 +13,7 @@ produces suitable phrases.
 
 **From the command line**
 
-    $ ./show_title.py -C
+    $ ./phrase.py -C
     Cool Skillful Title
 
 **In your own scripts**
@@ -22,7 +22,7 @@ There is no easy way to use it in your own scripts at the moment. But
 if you really must use it _right this second_ in your own scripts then
 you can do:
 
-    >>> from show_title import generate_wordlist, passphrase
+    >>> from phrase import generate_wordlist, passphrase
     >>> adjectives = generate_wordlist("adjectives.txt")
     >>> nouns = generate_wordlist("nouns.txt")
     >>> phrase(adjectives, adjectives, nouns, " ")
@@ -37,12 +37,12 @@ these in the repo:
 + nouns.txt
 
 It will check for the existence of these files in the current directory
-or in `~/.show-title/`
+or in `~/.phrase/`
 
 If you want to use other files, or relocate them, use the command line
 options.
 
-    $ ./show_tile.py --adjectives="/usr/share/dict/adjectives" --nouns="/usr/share/dict/nouns" --verbs="/usr/share/dict/verbs"
+    $ ./phrase.py --adjectives="/usr/share/dict/adjectives" --nouns="/usr/share/dict/nouns" --verbs="/usr/share/dict/verbs"
 
 ## Command line options
 
@@ -64,13 +64,6 @@ options.
                             Force passphrase to capitalise each word
       -V, --verbose         Report various metrics for given options
 
-
-## Thanks
-
-Thanks to Steven Tobin and his version of the
-[XKCD-password-generator](https://github.com/redacted/XKCD-password-generator),
-it inspired me to add some additional features to my own version. I've
-also used bits & pieces of the code from XKCD-password-generator here.
 
 ## License
 
