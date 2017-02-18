@@ -14,6 +14,7 @@ __LICENSE__ = """
 The MIT License (MIT)
 
 Copyright (c) 2012 Aaron Bassett, http://aaronbassett.com
+Copyright (c) 2017 Martin Wimpress, http://flexion.org
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -70,7 +71,7 @@ def validate_options(options, args):
     if len(args) >= 1:
         parser.error("Too many arguments.")
 
-    for word_type in ["adjectives", "nouns", "verbs"]:
+    for word_type in ["adjectives", "nouns"]:
         wordfile = getattr(options, word_type, None)
         if wordfile is not None:
             if not os.path.exists(os.path.abspath(wordfile)):
@@ -90,79 +91,10 @@ def validate_options(options, args):
             sys.exit(1)
 
 
-def leet(word):
-    geek_letters = {
-        "a": ["4", "@"],
-        "b": ["8",],
-        "c": ["(",],
-        "e": ["3",],
-        "f": ["ph", "pH"],
-        "g": ["9", "6"],
-        "h": ["#",],
-        "i": ["1", "!", "|"],
-        "l": ["!", "|"],
-        "o": ["0", "()"],
-        "q": ["kw",],
-        "s": ["5", "$"],
-        "t": ["7",],
-        "x": ["><",],
-        "y": ["j",],
-        "z": ["2",]
-    }
-    
-    geek_word = ""
-    
-    for letter in word:
-        l = letter.lower()
-        if l in geek_letters:
-            # swap out the letter *most* (80%) of the time
-            if rng().randint(1,5) % 5 != 0:
-                letter = rng().choice(geek_letters[l])
-        else:
-            # uppercase it *some* (10%) of the time
-            if rng().randint(1,10) % 10 != 0:
-                letter = letter.upper()
-        
-        geek_word += letter
-    
-    # if last letter is an S swap it out half the time
-    if word[-1:].lower() == "s" and rng().randint(1,2) % 2 == 0:
-        geek_word = geek_word[:-1] + "zz"
-    
-    return geek_word
-    
-
-def mini_leet(word):
-    geek_letters = {
-        "a": "4",
-        "b": "8",
-        "e": "3",
-        "g": "6",
-        "i": "1",
-        "o": "0",
-        "s": "5",
-        "t": "7",
-        "z": "2",
-    }
-    
-    geek_word = ""
-    
-    for letter in word:
-        l = letter.lower()
-        if l in geek_letters:
-            letter = geek_letters[l]
-        
-        geek_word += letter
-    
-    return geek_word
-
-
 def generate_wordlist(wordfile=None,
                       min_length=0,
                       max_length=20,
-                      valid_chars='.',
-                      make_leet=False,
-                      make_mini_leet=False):
+                      valid_chars='.'):
     """
     Generate a word list from either a kwarg wordfile, or a system default
     valid_chars is a regular expression match condition (default - all chars)
@@ -179,11 +111,6 @@ def generate_wordlist(wordfile=None,
     for line in wlf:
         thisword = line.strip()
         if regexp.match(thisword) is not None:
-            if make_mini_leet:
-                thisword = mini_leet(thisword)
-            elif make_leet:
-                thisword = leet(thisword)
-
             words.append(thisword)
 
     wlf.close()
@@ -197,37 +124,6 @@ def generate_wordlist(wordfile=None,
     return words
     
 
-def craking_time(seconds):
-    minute = 60
-    hour = minute * 60
-    day = hour * 24
-    week = day * 7
-    
-    if seconds < 60:
-        return "less than a minute"
-    elif seconds < 60 * 5:
-        return "less than 5 minutes"
-    elif seconds < 60 * 10:
-        return "less than 10 minutes"
-    elif seconds < 60 * 60:
-        return "less than an hour"
-    elif seconds < 60 * 60 * 24:
-        hours, r = divmod(seconds, 60 * 60)
-        return "about %i hours" % hours
-    elif seconds < 60 * 60 * 24 * 14:
-        days, r = divmod(seconds, 60 * 60 * 24)
-        return "about %i days" % days
-    elif seconds < 60 * 60 * 24 * 7 * 8:
-        weeks, r = divmod(seconds, 60 * 60 * 24 * 7)
-        return "about %i weeks" % weeks
-    elif seconds < 60 * 60 * 24 * 365 * 2:
-        months, r = divmod(seconds, 60 * 60 * 24 * 7 * 4)
-        return "about %i months" % months
-    else:
-        years, r = divmod(seconds, 60 * 60 * 24 * 365)
-        return "about %i years" % years
-
-
 def verbose_reports(**kwargs):
     """
     Report entropy metrics based on word list size"
@@ -236,7 +132,7 @@ def verbose_reports(**kwargs):
     options = kwargs.pop("options")
     f = {}
 
-    for word_type in ["adjectives", "nouns", "verbs"]:
+    for word_type in ["adjectives", "nouns"]:
         print("The supplied {word_type} list is located at {loc}.".format(
             word_type=word_type,
             loc=os.path.abspath(getattr(options, word_type))
@@ -252,41 +148,19 @@ def verbose_reports(**kwargs):
                   % (word_type, f[word_type]["length"], f[word_type]["bits"]))
         else:
             print("Your %s word list contains %i words, or 2^%0.2f words."
-                  % (word_type, f[word_type]["length"], f[word_type]["bits"]))
-    
-    entropy = f["adjectives"]["bits"] +\
-              f["nouns"]["bits"] +\
-              f["verbs"]["bits"] +\
-              f["adjectives"]["bits"] +\
-              f["nouns"]["bits"]
-    
-    print("A passphrase from this list will have roughly "
-          "%i (%0.2f + %0.2f + %0.2f + %0.2f + %0.2f) bits of entropy, " % (
-              entropy,
-              f["adjectives"]["bits"],
-              f["nouns"]["bits"],
-              f["verbs"]["bits"],
-              f["adjectives"]["bits"],
-              f["nouns"]["bits"]
-          ))
+                  % (word_type, f[word_type]["length"], f[word_type]["bits"]))    
 
-    combinations = math.pow(2, int(entropy)) / 1000
-    time_taken = craking_time(combinations)
-    
-    print "Estimated time to crack this passphrase (at 1,000 guesses per second): %s\n" % time_taken
 
-def generate_passphrase(adjectives, nouns, verbs, separator):
-    return "{0}{s}{1}{s}{2}{s}{3}{s}{4}".format(
+def generate_phrase(adjectives, nouns, separator):
+    return "{0}{s}{1}{s}{2}{s}".format(
         rng().choice(adjectives),
-        rng().choice(nouns),
-        rng().choice(verbs),
         rng().choice(adjectives),
         rng().choice(nouns),
         s=separator
-    )
+    )    
 
 
-def passphrase(adjectives, nouns, verbs, separator, num=1,
+def phrase(adjectives, nouns, separator, num=1,
                uppercase=False, lowercase=False, capitalise=False):
     """
     Returns a random pass-phrase made up of
@@ -299,7 +173,7 @@ def passphrase(adjectives, nouns, verbs, separator, num=1,
     phrases = []
 
     for i in range(0, num):
-        phrase = generate_passphrase(adjectives, nouns, verbs, separator)
+        phrase = generate_phrase(adjectives, nouns, separator)
         if capitalise:
             phrase = string.capwords(phrase)
         phrases.append(phrase)
@@ -321,15 +195,11 @@ if __name__ == "__main__":
     
     parser.add_option("--adjectives", dest="adjectives",
                       default=None,
-                      help="List of valid adjectives for passphrase")
+                      help="List of valid adjectives for phrase")
                       
     parser.add_option("--nouns", dest="nouns",
                       default=None,
-                      help="List of valid nouns for passphrase")
-                      
-    parser.add_option("--verbs", dest="verbs",
-                      default=None,
-                      help="List of valid verbs for passphrase")
+                      help="List of valid nouns for phrase")
     
     parser.add_option("-s", "--separator", dest="separator",
                       default=' ',
@@ -337,15 +207,15 @@ if __name__ == "__main__":
                       
     parser.add_option("-n", "--num", dest="num",
                       default=1, type="int",
-                      help="Number of passphrases to generate")
+                      help="Number of phrases to generate")
                       
     parser.add_option("--min", dest="min_length",
                       default=0, type="int",
-                      help="Minimum length of a valid word to use in passphrase")
+                      help="Minimum length of a valid word to use in phrase")
                       
     parser.add_option("--max", dest="max_length",
                       default=20, type="int",
-                      help="Maximum length of a valid word to use in passphrase")
+                      help="Maximum length of a valid word to use in phrase")
                       
     parser.add_option("--valid_chars", dest="valid_chars",
                       default='.',
@@ -353,7 +223,7 @@ if __name__ == "__main__":
     
     parser.add_option("-U", "--uppercase", dest="uppercase",
                       default=False, action="store_true",
-                      help="Force passphrase into uppercase")
+                      help="Force phrase into uppercase")
     
     parser.add_option("-L", "--lowercase", dest="lowercase",
                       default=False, action="store_true",
@@ -362,14 +232,6 @@ if __name__ == "__main__":
     parser.add_option("-C", "--capitalise", "--capitalize", dest="capitalise",
                       default=False, action="store_true",
                       help="Force passphrase to capitalise each word")
-    
-    parser.add_option("--l337", dest="make_leet",
-                      default=False, action="store_true",
-                      help="7#izz R3@l|j !$ 4941Nst 7#3 w#()|e 5P|R!7 0pH t#3 7#|N6.")
-                      
-    parser.add_option("--l337ish", dest="make_mini_leet",
-                      default=False, action="store_true",
-                      help="A l337 version which is easier to remember.")
 
     parser.add_option("-V", "--verbose", dest="verbose",
                       default=False, action="store_true",
@@ -382,34 +244,21 @@ if __name__ == "__main__":
     adjectives = generate_wordlist(wordfile=options.adjectives,
                               min_length=options.min_length,
                               max_length=options.max_length,
-                              valid_chars=options.valid_chars,
-                              make_mini_leet=options.make_mini_leet,
-                              make_leet=options.make_leet)
+                              valid_chars=options.valid_chars)
     
     nouns = generate_wordlist(wordfile=options.nouns,
                               min_length=options.min_length,
                               max_length=options.max_length,
-                              valid_chars=options.valid_chars,
-                              make_mini_leet=options.make_mini_leet,
-                              make_leet=options.make_leet)
-    
-    verbs = generate_wordlist(wordfile=options.verbs,
-                              min_length=options.min_length,
-                              max_length=options.max_length,
-                              valid_chars=options.valid_chars,
-                              make_mini_leet=options.make_mini_leet,
-                              make_leet=options.make_leet)
+                              valid_chars=options.valid_chars)
     
     if options.verbose:
         verbose_reports(adjectives=adjectives,
                         nouns=nouns,
-                        verbs=verbs,
                         options=options)
     
-    print(passphrase(
+    print(phrase(
             adjectives,
             nouns,
-            verbs,
             options.separator,
             num=int(options.num),
             uppercase=options.uppercase,
